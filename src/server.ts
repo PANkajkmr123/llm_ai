@@ -19,7 +19,7 @@ import { rateLimit } from 'express-rate-limit'
 const apiLimiter = rateLimit({
   //  windowMs: 1 * 60 * 1000, // 1 minutes
   windowMs: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-  limit: 5, // Limit each IP to 5 requests per `window` (here, per day)
+  limit: 10, // Limit each IP to 5 requests per `window` (here, per day)
   message: 'Your free per day limit exceeded. Please try again after 24 hours.',
   // message: `Too many requests from this IP . Please try again later in ${1} minute`,
 
@@ -44,7 +44,7 @@ connect();
  **********************************************************************************/
 
 // Common middlewares
-//app.use(apiLimiter);  // when you want make limit for perticular time of  a user
+app.use(apiLimiter);  // when you want make limit for perticular time of  a user
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -96,23 +96,23 @@ app.use((err: Error | CustomError, _: Request, res: Response, __: NextFunction) 
  *                         API route file upload
  **********************************************************************************/
 const baseUrlPython = process.env.baseUrlPython
-app.post('/uploads', apiLimiter, uploads.single('file'), async (req: any, res: any) => {
+app.post('/uploads', uploads.single('file'), async (req: any, res: any) => {
   const instance = axios.create({
     maxBodyLength: Infinity, // or a specific value in bytes
-});
+  });
   if (!req.file) {
-     if(req.body.chat_with_doc === 'chat_with_doc'){
-      const response = await instance.post(`${baseUrlPython}/document-chat/ask`, {
-        // headers: {
-        //   ...formData.getHeaders(),
-        // }
+    if (req.body.question && req.body.question != null && req.body.question != '' && req.body.file_id && req.body.file_id != null && req.body.file_id != '') {
+      const response = await instance.post(`${baseUrlPython}/document_chat/document_chat`, req.body, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      res.send(response.data);
-    }else{
+     return res.status(200).json(response.data);
+    } else {
       return res.status(400).send('No file uploaded.');
-    } 
-    
-}
+    }
+
+  }
   const types = req.body.type
   const formData = new FormData();
   formData.append('file', req.file.buffer, {
@@ -125,28 +125,28 @@ app.post('/uploads', apiLimiter, uploads.single('file'), async (req: any, res: a
         ...formData.getHeaders(),
       }
     });
-    res.send(response.data);
+    return res.status(200).send(response.data);
   } else if (req.file.mimetype.startsWith('audio/')) {
-    const response = await instance.post(`${baseUrlPython}/audio/upload"`, formData, {
+    const response = await instance.post(`${baseUrlPython}/audio/upload`, formData, {
       headers: {
         ...formData.getHeaders(),
       }
     });
     res.send(response.data);
   } else if (req.file.mimetype.startsWith('video/')) {
-    const response = await instance.post(`${baseUrlPython}/video/upload"`, formData, {
+    const response = await instance.post(`${baseUrlPython}/video/upload`, formData, {
       headers: {
         ...formData.getHeaders(),
       }
     });
     res.send(response.data);
   } else if (req.file.mimetype === 'application/pdf' && types === 'chat') {
-    const response = await instance.post(`${baseUrlPython}/document-chat/url`, formData, {
+     const response = await instance.post(`${baseUrlPython}/document_chat/document_chat`, formData, {
       headers: {
         ...formData.getHeaders(),
       }
     });
-    res.send(response.data);
+    return res.status(200).send(response.data);
   }else {
     return res.status(400).send('File format not supported.');
   }

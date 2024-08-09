@@ -3,8 +3,6 @@ import logger from 'jet-logger';
 import server from './server';
 const { createServer } = require("http");
 import swaggerDocs from './swagger'
-console.log(swaggerDocs,"swafe")
-
 
 // Constants
 const serverStartMsg = 'Express server started on port: ',
