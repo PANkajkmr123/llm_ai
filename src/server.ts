@@ -19,7 +19,7 @@ import { rateLimit } from 'express-rate-limit'
 const apiLimiter = rateLimit({
   //  windowMs: 1 * 60 * 1000, // 1 minutes
   windowMs: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-  limit: 10, // Limit each IP to 5 requests per `window` (here, per day)
+  limit: 5, // Limit each IP to 5 requests per `window` (here, per day)
   message: 'Your free per day limit exceeded. Please try again after 24 hours.',
   // message: `Too many requests from this IP . Please try again later in ${1} minute`,
 
@@ -44,7 +44,7 @@ connect();
  **********************************************************************************/
 
 // Common middlewares
-app.use(apiLimiter);  // when you want make limit for perticular time of  a user
+//app.use(apiLimiter);  // when you want make limit for perticular time of  a user
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -96,7 +96,7 @@ app.use((err: Error | CustomError, _: Request, res: Response, __: NextFunction) 
  *                         API route file upload
  **********************************************************************************/
 const baseUrlPython = process.env.baseUrlPython
-app.post('/uploads', uploads.single('file'), async (req: any, res: any) => {
+app.post('/uploads',apiLimiter, uploads.single('file'), async (req: any, res: any) => {
   const instance = axios.create({
     maxBodyLength: Infinity, // or a specific value in bytes
   });
